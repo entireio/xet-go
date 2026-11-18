@@ -17,6 +17,17 @@ const (
 	MaxCompleteSize = MaxNetworkSize + footerV1BaseSize + 40*MaxChunks + 4
 )
 
+// ErrHashMismatch reports a well-formed xorb, or xorb layout, whose chunks
+// hash to a xorb other than the expected one. Errors that wrap it keep the
+// text "xorb: hash mismatch" or "xorb: ingested hash mismatch".
+var ErrHashMismatch = errors.New("xorb: hash mismatch")
+
+// hashMismatchError has its own text and wraps ErrHashMismatch.
+type hashMismatchError struct{ text string }
+
+func (e *hashMismatchError) Error() string { return e.text }
+func (e *hashMismatchError) Unwrap() error { return ErrHashMismatch }
+
 // IngestedChunk is the storage metadata derived from one validated network
 // xorb chunk. Serialized ranges address the footerless/complete xorb content
 // section; uncompressed ranges address the logical xorb data.
@@ -41,7 +52,8 @@ type Ingested struct {
 // IngestNetwork validates a footerless upload, recomputes its identities, and
 // returns the canonical complete/cache representation and range metadata. It
 // accepts only the network form (see DecodeNetwork): a legacy trailer or a
-// complete/cache footer fails as malformed chunk data.
+// complete/cache footer fails as malformed chunk data. A well-formed body whose
+// chunks hash to another xorb fails with an error that wraps ErrHashMismatch.
 func IngestNetwork(body []byte, expected xethash.Hash) (*Ingested, error) {
 	if len(body) > MaxNetworkSize {
 		return nil, fmt.Errorf("xorb: network object size %d exceeds maximum %d", len(body), MaxNetworkSize)
@@ -51,7 +63,7 @@ func IngestNetwork(body []byte, expected xethash.Hash) (*Ingested, error) {
 		return nil, fmt.Errorf("xorb: ingest network object: %w", err)
 	}
 	if object.Hash != expected {
-		return nil, fmt.Errorf("xorb: hash mismatch: expected %s, computed %s", expected, object.Hash)
+		return nil, fmt.Errorf("%w: expected %s, computed %s", ErrHashMismatch, expected, object.Hash)
 	}
 	complete, err := EncodeComplete(object, [4]byte{})
 	if err != nil {
@@ -80,7 +92,9 @@ func IngestNetwork(body []byte, expected xethash.Hash) (*Ingested, error) {
 // decompressing the backing object. It returns the exact byte length of the
 // canonical complete/cache object described by the layout. Complete, when
 // present on a freshly ingested value, must have that length; durable indexes
-// may omit it after publishing the immutable bytes.
+// may omit it after publishing the immutable bytes. Chunk metadata that hashes
+// to a xorb other than value.Hash fails with an error that wraps
+// ErrHashMismatch.
 func ValidateIngested(value *Ingested) (int64, error) {
 	if value == nil {
 		return 0, errors.New("xorb: nil ingested layout")
@@ -120,7 +134,7 @@ func ValidateIngested(value *Ingested) (int64, error) {
 		return 0, errors.New("xorb: ingested terminal ranges differ from declared lengths")
 	}
 	if computed := xethash.Xorb(nodes); computed != value.Hash {
-		return 0, fmt.Errorf("xorb: ingested hash mismatch: declared %s, computed %s", value.Hash, computed)
+		return 0, &hashMismatchError{fmt.Sprintf("xorb: ingested hash mismatch: declared %s, computed %s", value.Hash, computed)}
 	}
 	completeSize := int64(value.NetworkBytes) + footerV1BaseSize + 40*int64(len(value.Chunks)) + 4
 	if value.Complete != nil && int64(len(value.Complete)) != completeSize {

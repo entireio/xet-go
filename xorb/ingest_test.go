@@ -2,6 +2,8 @@ package xorb
 
 import (
 	"bytes"
+	"errors"
+	"strings"
 	"testing"
 
 	"github.com/jmwoliver/xet-go/chunker"
@@ -197,5 +199,29 @@ func TestIngestNetworkAcceptsBodiesThatLookFramed(t *testing.T) {
 				t.Fatalf("complete form = %+v, %v", complete, err)
 			}
 		})
+	}
+}
+
+func TestHashMismatchIsDetectable(t *testing.T) {
+	object, err := Encode([][]byte{[]byte("hash mismatch sentinel")}, None)
+	if err != nil {
+		t.Fatal(err)
+	}
+	other := xethash.Chunk([]byte("another xorb"))
+	_, err = IngestNetwork(object.Body, other)
+	if !errors.Is(err, ErrHashMismatch) || !strings.HasPrefix(err.Error(), "xorb: hash mismatch: expected ") {
+		t.Fatalf("IngestNetwork = %v", err)
+	}
+	_, err = IngestNetwork(object.Body[:len(object.Body)-1], object.Hash)
+	requireFormatError(t, "malformed IngestNetwork", err)
+
+	ingested, err := IngestNetwork(object.Body, object.Hash)
+	if err != nil {
+		t.Fatal(err)
+	}
+	ingested.Hash = other
+	_, err = ValidateIngested(ingested)
+	if !errors.Is(err, ErrHashMismatch) || !strings.HasPrefix(err.Error(), "xorb: ingested hash mismatch: declared ") {
+		t.Fatalf("ValidateIngested = %v", err)
 	}
 }
