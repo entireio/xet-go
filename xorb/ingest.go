@@ -39,17 +39,16 @@ type Ingested struct {
 }
 
 // IngestNetwork validates a footerless upload, recomputes its identities, and
-// returns the canonical complete/cache representation and range metadata.
+// returns the canonical complete/cache representation and range metadata. It
+// accepts only the network form (see DecodeNetwork): a legacy trailer or a
+// complete/cache footer fails as malformed chunk data.
 func IngestNetwork(body []byte, expected xethash.Hash) (*Ingested, error) {
 	if len(body) > MaxNetworkSize {
 		return nil, fmt.Errorf("xorb: network object size %d exceeds maximum %d", len(body), MaxNetworkSize)
 	}
-	object, err := Decode(body)
+	object, err := DecodeNetwork(body)
 	if err != nil {
 		return nil, fmt.Errorf("xorb: ingest network object: %w", err)
-	}
-	if object.Footer != nil || object.LegacyTrailer || int(object.FooterOffset) != len(object.Body) {
-		return nil, errors.New("xorb: network upload must be footerless")
 	}
 	if object.Hash != expected {
 		return nil, fmt.Errorf("xorb: hash mismatch: expected %s, computed %s", expected, object.Hash)

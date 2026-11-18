@@ -329,22 +329,35 @@ func EncodeComplete(object *Object, nonce [4]byte) ([]byte, error) {
 
 // Decode validates and decompresses either a footerless network xorb or a V0
 // or V1 complete/cache xorb. All declared lengths are checked before allocation.
+//
+// A body whose chunk headers tile it exactly is a network xorb. Only a body
+// that is not one is read as a legacy-trailer or complete xorb. The forms are
+// exclusive, so an uncompressed last chunk whose data ends in "XETB" or in a
+// footer still decodes as a network xorb.
 func Decode(body []byte) (*Object, error) {
 	if len(body) == 0 {
 		return nil, &FormatError{Reason: "empty object"}
 	}
 	ownedBody := append([]byte(nil), body...)
+	if networkFramed(ownedBody) {
+		return decodeContent(ownedBody)
+	}
 	parseBody := ownedBody
-	legacy := len(ownedBody) >= len(legacyTrailer) && bytes.Equal(ownedBody[len(ownedBody)-len(legacyTrailer):], legacyTrailer[:])
+	legacy := bytes.HasSuffix(ownedBody, legacyTrailer[:])
 	if legacy {
 		parseBody = ownedBody[:len(ownedBody)-len(legacyTrailer)]
 		if len(parseBody) == 0 {
 			return nil, &FormatError{Reason: "legacy trailer has no content"}
 		}
 	}
-	contentEnd, footer, err := splitFooter(parseBody)
-	if err != nil {
-		return nil, err
+	contentEnd := len(parseBody)
+	var footer *Footer
+	if !networkFramed(parseBody) {
+		var err error
+		contentEnd, footer, err = splitFooter(parseBody)
+		if err != nil {
+			return nil, err
+		}
 	}
 	object, err := decodeContent(parseBody[:contentEnd])
 	if err != nil {
@@ -360,6 +373,35 @@ func Decode(body []byte) (*Object, error) {
 		}
 	}
 	return object, nil
+}
+
+// DecodeNetwork validates and decompresses a footerless network xorb only. It
+// rejects a legacy trailer and a complete/cache footer. Use it where the
+// protocol requires the network form, such as an upload body. FormatError
+// offsets count from the start of body.
+func DecodeNetwork(body []byte) (*Object, error) {
+	if len(body) == 0 {
+		return nil, &FormatError{Reason: "empty object"}
+	}
+	return decodeContent(append([]byte(nil), body...))
+}
+
+// networkFramed reports whether the chunk headers of body tile it exactly. It
+// reads only the headers. A footer starts with 'X' and a legacy trailer is
+// shorter than a header, so no complete or legacy xorb is network framed.
+func networkFramed(body []byte) bool {
+	offset := 0
+	for chunks := 0; offset < len(body); chunks++ {
+		if chunks == MaxChunks || len(body)-offset < HeaderSize || body[offset] != 0 {
+			return false
+		}
+		compressedLen := int(getUint24(body[offset+1 : offset+4]))
+		if compressedLen == 0 || compressedLen > 2*chunker.MaxSize {
+			return false
+		}
+		offset += HeaderSize + compressedLen
+	}
+	return offset == len(body)
 }
 
 // ReadChunk reads and validates exactly one serialized network-xorb chunk

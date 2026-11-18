@@ -573,3 +573,113 @@ func BenchmarkDecodeLZ4(b *testing.B) {
 		}
 	}
 }
+
+// networkBodyEndingIn returns a one-chunk network xorb whose chunk is stored
+// uncompressed and whose data ends in suffix.
+func networkBodyEndingIn(t testing.TB, suffix []byte) *Object {
+	t.Helper()
+	data := make([]byte, 16<<10)
+	_, _ = rand.New(rand.NewSource(11)).Read(data)
+	copy(data[len(data)-len(suffix):], suffix)
+	object, err := Encode([][]byte{data}, Auto)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if object.Chunks[0].Scheme != None {
+		t.Fatalf("chunk stored with %s, the test needs it uncompressed", object.Chunks[0].Scheme)
+	}
+	return object
+}
+
+// A network xorb can end in the bytes of a legacy trailer or of a complete
+// footer when its last chunk is stored uncompressed. Decode once read both as
+// framing and failed.
+func TestDecodeNetworkBodyThatLooksFramed(t *testing.T) {
+	inner, err := Encode([][]byte{[]byte("an inner xorb")}, None)
+	if err != nil {
+		t.Fatal(err)
+	}
+	innerComplete, err := EncodeComplete(inner, [4]byte{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	fakeFooter, err := Encode([][]byte{innerComplete}, None)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for name, object := range map[string]*Object{
+		"legacy trailer": networkBodyEndingIn(t, legacyTrailer[:]),
+		"complete xorb":  fakeFooter,
+	} {
+		t.Run(name, func(t *testing.T) {
+			for decoder, decode := range map[string]func([]byte) (*Object, error){"Decode": Decode, "DecodeNetwork": DecodeNetwork} {
+				decoded, err := decode(object.Body)
+				if err != nil {
+					t.Fatalf("%s: %v", decoder, err)
+				}
+				if decoded.Hash != object.Hash || decoded.Footer != nil || decoded.LegacyTrailer ||
+					decoded.FooterOffset != uint32(len(object.Body)) || len(decoded.Chunks) != 1 ||
+					!bytes.Equal(decoded.Chunks[0].Data, object.Chunks[0].Data) {
+					t.Fatalf("%s decoded %+v", decoder, decoded)
+				}
+			}
+		})
+	}
+}
+
+func TestDecodeNetworkRejectsOtherForms(t *testing.T) {
+	object, err := Encode([][]byte{[]byte("strict network form")}, None)
+	if err != nil {
+		t.Fatal(err)
+	}
+	complete, err := EncodeComplete(object, [4]byte{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	legacy := append(append([]byte(nil), object.Body...), legacyTrailer[:]...)
+	for name, body := range map[string][]byte{"empty": nil, "complete": complete, "legacy": legacy} {
+		t.Run(name, func(t *testing.T) {
+			_, err := DecodeNetwork(body)
+			requireFormatError(t, "DecodeNetwork", err)
+			if name == "empty" {
+				return
+			}
+			if decoded, err := Decode(body); err != nil || (decoded.Footer == nil && !decoded.LegacyTrailer) {
+				t.Fatalf("Decode = %+v, %v", decoded, err)
+			}
+		})
+	}
+}
+
+// FuzzDecodeNetwork checks that Decode reads every valid network xorb as one,
+// whatever its last bytes look like.
+func FuzzDecodeNetwork(f *testing.F) {
+	object, err := Encode([][]byte{bytes.Repeat([]byte("xet"), 4096)}, Auto)
+	if err != nil {
+		f.Fatal(err)
+	}
+	f.Add(object.Body)
+	f.Add(networkBodyEndingIn(f, legacyTrailer[:]).Body)
+	inner, err := EncodeComplete(object, [4]byte{})
+	if err != nil {
+		f.Fatal(err)
+	}
+	f.Add(inner)
+	f.Fuzz(func(t *testing.T, data []byte) {
+		if len(data) > 2<<20 {
+			return
+		}
+		network, err := DecodeNetwork(data)
+		if err != nil {
+			return
+		}
+		decoded, err := Decode(data)
+		if err != nil {
+			t.Fatalf("Decode rejected a valid network xorb: %v", err)
+		}
+		if decoded.Hash != network.Hash || decoded.Footer != nil || decoded.LegacyTrailer ||
+			len(decoded.Chunks) != len(network.Chunks) {
+			t.Fatalf("Decode read a network xorb as %+v", decoded)
+		}
+	})
+}

@@ -166,3 +166,36 @@ func cloneIngested(value *Ingested) *Ingested {
 	result.Chunks = append([]IngestedChunk(nil), value.Chunks...)
 	return &result
 }
+
+func TestIngestNetworkAcceptsBodiesThatLookFramed(t *testing.T) {
+	inner, err := Encode([][]byte{[]byte("an inner xorb")}, None)
+	if err != nil {
+		t.Fatal(err)
+	}
+	innerComplete, err := EncodeComplete(inner, [4]byte{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	fakeFooter, err := Encode([][]byte{innerComplete}, None)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for name, object := range map[string]*Object{
+		"legacy trailer": networkBodyEndingIn(t, legacyTrailer[:]),
+		"complete xorb":  fakeFooter,
+	} {
+		t.Run(name, func(t *testing.T) {
+			ingested, err := IngestNetwork(object.Body, object.Hash)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if ingested.NetworkBytes != uint32(len(object.Body)) || len(ingested.Chunks) != 1 {
+				t.Fatalf("ingested %+v", ingested)
+			}
+			complete, err := Decode(ingested.Complete)
+			if err != nil || complete.Footer == nil || complete.Hash != object.Hash {
+				t.Fatalf("complete form = %+v, %v", complete, err)
+			}
+		})
+	}
+}
