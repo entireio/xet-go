@@ -56,7 +56,9 @@ type Ingested struct {
 // chunks hash to another xorb fails with an error that wraps ErrHashMismatch.
 //
 // IngestNetwork decodes body once and does not retain it: Complete is a new
-// slice, so the caller may reuse or change body afterwards.
+// slice, so the caller may reuse or change body afterwards. It holds every
+// decoded chunk at once. VerifyNetwork checks the same body with one chunk of
+// scratch, and AppendFooter then builds the complete form in place.
 func IngestNetwork(body []byte, expected xethash.Hash) (*Ingested, error) {
 	if len(body) > MaxNetworkSize {
 		return nil, fmt.Errorf("xorb: network object size %d exceeds maximum %d", len(body), MaxNetworkSize)
@@ -89,6 +91,36 @@ func IngestNetwork(body []byte, expected xethash.Hash) (*Ingested, error) {
 		}
 	}
 	return result, nil
+}
+
+// VerifyNetwork checks body as IngestNetwork does: body must be a footerless
+// network xorb whose chunks hash to want. It returns the V1 footer of body
+// with a zero nonce, so AppendFooter(body, footer) is the complete form that
+// IngestNetwork returns. When body has room for FooterSize more bytes,
+// AppendFooter writes the footer in place and does not copy body.
+//
+// VerifyNetwork decompresses each chunk into scratch buffers that it reuses
+// and hashes the chunks in batches of up to 16, so it holds a few MiB at most
+// whatever the size of body. It does not retain body. A well-formed body whose
+// chunks hash to another xorb fails with an error that wraps ErrHashMismatch.
+// Every other failure is a FormatError whose offset counts from the start of
+// body; unlike IngestNetwork, that includes an oversized body.
+func VerifyNetwork(body []byte, want xethash.Hash) (*Footer, error) {
+	if len(body) > MaxNetworkSize {
+		return nil, &FormatError{Reason: fmt.Sprintf("network object size %d exceeds maximum %d", len(body), MaxNetworkSize)}
+	}
+	if len(body) == 0 {
+		return nil, &FormatError{Reason: "empty object"}
+	}
+	table := newTableBuilder()
+	for offset := 0; offset < len(body); {
+		end, err := table.add(body, offset)
+		if err != nil {
+			return nil, err
+		}
+		offset = end
+	}
+	return table.seal(want)
 }
 
 // ValidateIngested verifies persisted Xorb layout metadata without reading or

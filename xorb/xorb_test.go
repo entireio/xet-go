@@ -476,7 +476,8 @@ func TestBG4Remainders(t *testing.T) {
 		for i := range data {
 			data[i] = byte(i)
 		}
-		if got := bg4Regroup(bg4Split(data)); !bytes.Equal(got, data) {
+		got := make([]byte, n)
+		if bg4Regroup(got, bg4Split(data)); !bytes.Equal(got, data) {
 			t.Fatalf("length %d round trip = %x, want %x", n, got, data)
 		}
 	}
@@ -652,7 +653,8 @@ func TestDecodeNetworkRejectsOtherForms(t *testing.T) {
 }
 
 // FuzzDecodeNetwork checks that Decode reads every valid network xorb as one,
-// whatever its last bytes look like.
+// whatever its last bytes look like, and that VerifyNetwork accepts exactly
+// the bodies that DecodeNetwork accepts.
 func FuzzDecodeNetwork(f *testing.F) {
 	object, err := Encode([][]byte{bytes.Repeat([]byte("xet"), 4096)}, Auto)
 	if err != nil {
@@ -665,13 +667,28 @@ func FuzzDecodeNetwork(f *testing.F) {
 		f.Fatal(err)
 	}
 	f.Add(inner)
+	crossChunk, _ := crossChunkLZ4Body()
+	f.Add(crossChunk)
 	f.Fuzz(func(t *testing.T, data []byte) {
 		if len(data) > 2<<20 {
 			return
 		}
 		network, err := DecodeNetwork(data)
 		if err != nil {
+			_, verifyErr := VerifyNetwork(data, xethash.Zero)
+			requireFormatError(t, "VerifyNetwork of a malformed body", verifyErr)
 			return
+		}
+		footer, err := VerifyNetwork(data, network.Hash)
+		if err != nil {
+			t.Fatalf("VerifyNetwork rejected a valid network xorb: %v", err)
+		}
+		complete, err := EncodeComplete(network, [4]byte{})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !bytes.Equal(AppendFooter(append([]byte(nil), data...), footer), complete) {
+			t.Fatal("VerifyNetwork footer differs from EncodeComplete")
 		}
 		decoded, err := Decode(data)
 		if err != nil {
