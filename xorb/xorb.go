@@ -205,12 +205,9 @@ func encode(chunks [][]byte, schemes []Scheme) (*Object, error) {
 	payloads := make([][]byte, len(chunks))
 	serializedTotal := 0
 	for i, data := range chunks {
-		used, payload, err := encodePayload(data, schemes[i])
+		used, payload, err := encodeChunkPayload(data, schemes[i])
 		if err != nil {
 			return nil, fmt.Errorf("xorb: chunk %d: %w", i, err)
-		}
-		if len(payload) > maxUint24 {
-			return nil, fmt.Errorf("xorb: chunk %d serialized payload too large", i)
 		}
 		start := serializedTotal
 		serializedTotal += HeaderSize + len(payload)
@@ -233,16 +230,12 @@ func encode(chunks [][]byte, schemes []Scheme) (*Object, error) {
 		object.UncompressedSize += uint32(len(data))
 		nodes = append(nodes, xethash.Node{Hash: hash, Size: uint64(len(data))})
 	}
-	body := make([]byte, serializedTotal)
+	body := make([]byte, 0, serializedTotal)
 	for i, chunk := range object.Chunks {
-		start := int(chunk.SerializedOffset)
-		header := body[start : start+HeaderSize]
-		putUint24(header[1:4], uint32(len(payloads[i])))
-		header[4] = byte(chunk.Scheme)
-		putUint24(header[5:8], chunk.UncompressedLength)
-		copy(body[start+HeaderSize:], payloads[i])
+		body = appendSerializedChunk(body, chunk.Scheme, payloads[i], len(chunks[i]))
 		if chunk.Scheme == None {
-			object.Chunks[i].Data = body[start+HeaderSize : start+HeaderSize+len(payloads[i])]
+			start := int(chunk.SerializedOffset) + HeaderSize
+			object.Chunks[i].Data = body[start : start+len(payloads[i])]
 		}
 	}
 	object.Body = body
@@ -268,83 +261,71 @@ func EncodeComplete(object *Object, nonce [4]byte) ([]byte, error) {
 	if err != nil {
 		return nil, fmt.Errorf("xorb: encode complete: %w", err)
 	}
-	n := len(decoded.Chunks)
-	if n > MaxChunks {
-		return nil, errors.New("xorb: complete footer chunk count exceeds limit")
+	return appendComplete(object.Body[:contentEnd], decoded, nonce), nil
+}
+
+// appendComplete returns a new slice that holds content and the V1 footer of
+// decoded, the decoded form of content.
+func appendComplete(content []byte, decoded *Object, nonce [4]byte) []byte {
+	footer := footerFromChunks(decoded.Hash, decoded.Chunks, nonce)
+	out := make([]byte, len(content), len(content)+FooterSize(len(decoded.Chunks)))
+	copy(out, content)
+	return AppendFooter(out, footer)
+}
+
+// footerFromChunks returns the V1 footer of a content section with the given
+// xorb hash and chunks.
+func footerFromChunks(hash xethash.Hash, chunks []Chunk, nonce [4]byte) *Footer {
+	n := len(chunks)
+	footer := &Footer{
+		Version:                 1,
+		XorbHash:                hash,
+		ChunkHashes:             make([]xethash.Hash, n),
+		ChunkBoundaryOffsets:    make([]uint32, n),
+		UnpackedChunkOffsets:    make([]uint32, n),
+		UniquenessNonce:         nonce,
+		HashesOffsetFromEnd:     uint32(52 + 40*n),
+		BoundariesOffsetFromEnd: uint32(40 + 8*n),
 	}
-	infoLength := footerV1BaseSize + 40*n
-	out := make([]byte, contentEnd, contentEnd+infoLength+4)
-	copy(out, object.Body[:contentEnd])
-	footer := make([]byte, infoLength)
-	position := 0
-	copy(footer[position:position+7], footerMagic[:])
-	position += 7
-	footer[position] = 1
-	position++
-	copy(footer[position:position+xethash.Size], decoded.Hash[:])
-	position += xethash.Size
-	copy(footer[position:position+7], footerHashesMagic[:])
-	position += 7
-	footer[position] = 0
-	position++
-	binary.LittleEndian.PutUint32(footer[position:position+4], uint32(n))
-	position += 4
-	for _, chunk := range decoded.Chunks {
-		copy(footer[position:position+xethash.Size], chunk.Hash[:])
-		position += xethash.Size
+	for i, chunk := range chunks {
+		footer.ChunkHashes[i] = chunk.Hash
+		footer.ChunkBoundaryOffsets[i] = chunk.SerializedOffset + chunk.SerializedLength
+		footer.UnpackedChunkOffsets[i] = chunk.UncompressedOffset + chunk.UncompressedLength
 	}
-	copy(footer[position:position+7], footerBoundsMagic[:])
-	position += 7
-	footer[position] = 1
-	position++
-	binary.LittleEndian.PutUint32(footer[position:position+4], uint32(n))
-	position += 4
-	for _, chunk := range decoded.Chunks {
-		boundary := chunk.SerializedOffset + chunk.SerializedLength
-		binary.LittleEndian.PutUint32(footer[position:position+4], boundary)
-		position += 4
-	}
-	for _, chunk := range decoded.Chunks {
-		boundary := chunk.UncompressedOffset + chunk.UncompressedLength
-		binary.LittleEndian.PutUint32(footer[position:position+4], boundary)
-		position += 4
-	}
-	binary.LittleEndian.PutUint32(footer[position:position+4], uint32(n))
-	position += 4
-	hashesFromEnd := uint32(52 + 40*n)
-	boundsFromEnd := uint32(40 + 8*n)
-	binary.LittleEndian.PutUint32(footer[position:position+4], hashesFromEnd)
-	position += 4
-	binary.LittleEndian.PutUint32(footer[position:position+4], boundsFromEnd)
-	position += 4
-	copy(footer[position:position+4], nonce[:])
-	position += 16 // nonce followed by twelve reserved zero bytes
-	if position != infoLength {
-		return nil, errors.New("xorb: internal complete footer length mismatch")
-	}
-	out = append(out, footer...)
-	out = binary.LittleEndian.AppendUint32(out, uint32(infoLength))
-	return out, nil
+	return footer
 }
 
 // Decode validates and decompresses either a footerless network xorb or a V0
 // or V1 complete/cache xorb. All declared lengths are checked before allocation.
+//
+// A body whose chunk headers tile it exactly is a network xorb. Only a body
+// that is not one is read as a legacy-trailer or complete xorb. The forms are
+// exclusive, so an uncompressed last chunk whose data ends in "XETB" or in a
+// footer still decodes as a network xorb.
 func Decode(body []byte) (*Object, error) {
 	if len(body) == 0 {
 		return nil, &FormatError{Reason: "empty object"}
 	}
 	ownedBody := append([]byte(nil), body...)
+	if networkFramed(ownedBody) {
+		return decodeContent(ownedBody)
+	}
 	parseBody := ownedBody
-	legacy := len(ownedBody) >= len(legacyTrailer) && bytes.Equal(ownedBody[len(ownedBody)-len(legacyTrailer):], legacyTrailer[:])
+	legacy := bytes.HasSuffix(ownedBody, legacyTrailer[:])
 	if legacy {
 		parseBody = ownedBody[:len(ownedBody)-len(legacyTrailer)]
 		if len(parseBody) == 0 {
 			return nil, &FormatError{Reason: "legacy trailer has no content"}
 		}
 	}
-	contentEnd, footer, err := splitFooter(parseBody)
-	if err != nil {
-		return nil, err
+	contentEnd := len(parseBody)
+	var footer *Footer
+	if !networkFramed(parseBody) {
+		var err error
+		contentEnd, footer, err = splitFooter(parseBody)
+		if err != nil {
+			return nil, err
+		}
 	}
 	object, err := decodeContent(parseBody[:contentEnd])
 	if err != nil {
@@ -362,6 +343,31 @@ func Decode(body []byte) (*Object, error) {
 	return object, nil
 }
 
+// DecodeNetwork validates and decompresses a footerless network xorb only. It
+// rejects a legacy trailer and a complete/cache footer. Use it where the
+// protocol requires the network form, such as an upload body. FormatError
+// offsets count from the start of body.
+func DecodeNetwork(body []byte) (*Object, error) {
+	if len(body) == 0 {
+		return nil, &FormatError{Reason: "empty object"}
+	}
+	return decodeContent(append([]byte(nil), body...))
+}
+
+// networkFramed reports whether the chunk headers of body tile it exactly. It
+// reads only the headers. A footer starts with 'X' and a legacy trailer is
+// shorter than a header, so no complete or legacy xorb is network framed.
+func networkFramed(body []byte) bool {
+	for offset, count := 0, 0; offset < len(body); count++ {
+		_, payloadEnd, _, err := chunkAt(body, offset, count)
+		if err != nil {
+			return false
+		}
+		offset = payloadEnd
+	}
+	return true
+}
+
 // ReadChunk reads and validates exactly one serialized network-xorb chunk
 // from reader. It is intended for bounded reconstruction streams that fetch a
 // complete chunk-aligned object range without buffering the rest of the xorb.
@@ -376,7 +382,7 @@ func ReadChunk(reader io.Reader) (Chunk, error) {
 		return Chunk{}, fmt.Errorf("xorb: read serialized chunk header: %w", err)
 	}
 	compressedLen := int(getUint24(serialized[1:4]))
-	if compressedLen == 0 || compressedLen > 2*chunker.MaxSize {
+	if compressedLen == 0 || compressedLen > MaxSerializedChunk-HeaderSize {
 		// Decode the header through the canonical parser so callers receive the
 		// same FormatError taxonomy as whole-xorb decoding.
 		_, err := decodeContent(serialized)
@@ -396,39 +402,52 @@ func ReadChunk(reader io.Reader) (Chunk, error) {
 	return object.Chunks[0], nil
 }
 
+// chunkAt validates the header of the chunk at offset in body, the chunk
+// after count others, and returns its scheme, the end of its payload and its
+// unpacked length. It checks every declared length before a caller reads or
+// allocates by it.
+func chunkAt(body []byte, offset, count int) (scheme Scheme, payloadEnd, uncompressedLen int, err error) {
+	if count == MaxChunks {
+		return 0, 0, 0, &FormatError{Offset: offset, Reason: "too many chunks"}
+	}
+	if len(body)-offset < HeaderSize {
+		return 0, 0, 0, &FormatError{Offset: offset, Reason: "truncated chunk header"}
+	}
+	header := body[offset : offset+HeaderSize]
+	if header[0] != 0 {
+		return 0, 0, 0, &FormatError{Offset: offset, Reason: fmt.Sprintf("unsupported version %d", header[0])}
+	}
+	compressedLen := int(getUint24(header[1:4]))
+	scheme = Scheme(header[4])
+	uncompressedLen = int(getUint24(header[5:8]))
+	if compressedLen == 0 {
+		return 0, 0, 0, &FormatError{Offset: offset + 1, Reason: "zero compressed length"}
+	}
+	if compressedLen > MaxSerializedChunk-HeaderSize {
+		return 0, 0, 0, &FormatError{Offset: offset + 1, Reason: "compressed length exceeds limit"}
+	}
+	if uncompressedLen == 0 || uncompressedLen > chunker.MaxSize {
+		return 0, 0, 0, &FormatError{Offset: offset + 5, Reason: "uncompressed length outside limit"}
+	}
+	payloadStart := offset + HeaderSize
+	payloadEnd = payloadStart + compressedLen
+	if payloadEnd > len(body) {
+		return 0, 0, 0, &FormatError{Offset: payloadStart, Reason: "truncated chunk payload"}
+	}
+	return scheme, payloadEnd, uncompressedLen, nil
+}
+
 func decodeContent(body []byte) (*Object, error) {
 	if len(body) == 0 {
 		return nil, &FormatError{Reason: "empty content section"}
 	}
 	object := &Object{Body: body, FooterOffset: uint32(len(body))}
 	for offset := 0; offset < len(body); {
-		if len(object.Chunks) == MaxChunks {
-			return nil, &FormatError{Offset: offset, Reason: "too many chunks"}
-		}
-		if len(body)-offset < HeaderSize {
-			return nil, &FormatError{Offset: offset, Reason: "truncated chunk header"}
-		}
-		header := body[offset : offset+HeaderSize]
-		if header[0] != 0 {
-			return nil, &FormatError{Offset: offset, Reason: fmt.Sprintf("unsupported version %d", header[0])}
-		}
-		compressedLen := int(getUint24(header[1:4]))
-		scheme := Scheme(header[4])
-		uncompressedLen := int(getUint24(header[5:8]))
-		if compressedLen == 0 {
-			return nil, &FormatError{Offset: offset + 1, Reason: "zero compressed length"}
-		}
-		if compressedLen > 2*chunker.MaxSize {
-			return nil, &FormatError{Offset: offset + 1, Reason: "compressed length exceeds limit"}
-		}
-		if uncompressedLen == 0 || uncompressedLen > chunker.MaxSize {
-			return nil, &FormatError{Offset: offset + 5, Reason: "uncompressed length outside limit"}
+		scheme, payloadEnd, uncompressedLen, err := chunkAt(body, offset, len(object.Chunks))
+		if err != nil {
+			return nil, err
 		}
 		payloadStart := offset + HeaderSize
-		payloadEnd := payloadStart + compressedLen
-		if payloadEnd < payloadStart || payloadEnd > len(body) {
-			return nil, &FormatError{Offset: payloadStart, Reason: "truncated chunk payload"}
-		}
 		data, err := decodePayload(body[payloadStart:payloadEnd], scheme, uncompressedLen)
 		if err != nil {
 			return nil, &FormatError{Offset: payloadStart, Reason: err.Error()}
@@ -439,7 +458,7 @@ func decodeContent(body []byte) (*Object, error) {
 		object.Chunks = append(object.Chunks, Chunk{
 			Scheme:             scheme,
 			SerializedOffset:   uint32(offset),
-			SerializedLength:   uint32(HeaderSize + compressedLen),
+			SerializedLength:   uint32(payloadEnd - offset),
 			UncompressedOffset: object.UncompressedSize,
 			UncompressedLength: uint32(len(data)),
 			Data:               data,
@@ -585,6 +604,29 @@ func validateFooter(object *Object, footer *Footer) error {
 	return nil
 }
 
+// encodeChunkPayload compresses one chunk as encodePayload does and checks
+// that the payload fits its header.
+func encodeChunkPayload(data []byte, requested Scheme) (Scheme, []byte, error) {
+	used, payload, err := encodePayload(data, requested)
+	if err != nil {
+		return 0, nil, err
+	}
+	if len(payload) > maxUint24 {
+		return 0, nil, errors.New("serialized payload too large")
+	}
+	return used, payload, nil
+}
+
+// appendSerializedChunk appends the header and the payload of one chunk of
+// rawLen unpacked bytes to dst.
+func appendSerializedChunk(dst []byte, scheme Scheme, payload []byte, rawLen int) []byte {
+	var header [HeaderSize]byte
+	putUint24(header[1:4], uint32(len(payload)))
+	header[4] = byte(scheme)
+	putUint24(header[5:8], uint32(rawLen))
+	return append(append(dst, header[:]...), payload...)
+}
+
 func encodePayload(data []byte, requested Scheme) (Scheme, []byte, error) {
 	if requested != None && requested != LZ4 && requested != BG4LZ4 && requested != Auto {
 		return 0, nil, fmt.Errorf("unknown compression scheme %d", requested)
@@ -655,19 +697,45 @@ func chooseCompression(data []byte) Scheme {
 	return LZ4
 }
 
+// decodePayload returns the decoded data of one chunk payload. The data is
+// payload itself for an uncompressed chunk and a new slice otherwise.
 func decodePayload(payload []byte, scheme Scheme, want int) ([]byte, error) {
 	if scheme == None {
-		if len(payload) != want {
-			return nil, fmt.Errorf("uncompressed payload length %d, want %d", len(payload), want)
-		}
-		return payload, nil
+		return uncompressedPayload(payload, want)
+	}
+	var d payloadDecoder
+	return d.decode(payload, scheme, want)
+}
+
+func uncompressedPayload(payload []byte, want int) ([]byte, error) {
+	if len(payload) != want {
+		return nil, fmt.Errorf("uncompressed payload length %d, want %d", len(payload), want)
+	}
+	return payload, nil
+}
+
+// payloadDecoder decodes chunk payloads. With reuse set, it decompresses into
+// scratch buffers that it keeps, and a decoded chunk is valid only until the
+// next call. Without it, each decoded chunk is a new slice.
+type payloadDecoder struct {
+	reuse   bool
+	grouped []byte
+	data    []byte
+}
+
+func (d *payloadDecoder) decode(payload []byte, scheme Scheme, want int) ([]byte, error) {
+	if scheme == None {
+		return uncompressedPayload(payload, want)
 	}
 	if scheme != LZ4 && scheme != BG4LZ4 {
 		return nil, fmt.Errorf("unknown compression scheme %d", scheme)
 	}
+	// Each payload gets a new reader. lz4.Reader.Reset keeps the window of
+	// the previous frame, so a frame with dependent blocks could copy data
+	// from another chunk.
 	r := lz4.NewReader(bytes.NewReader(payload))
-	data := make([]byte, want)
-	n, err := io.ReadFull(r, data)
+	d.grouped = d.scratch(d.grouped, want)
+	n, err := io.ReadFull(r, d.grouped)
 	if err != nil {
 		return nil, fmt.Errorf("invalid LZ4 frame: %w", err)
 	}
@@ -690,10 +758,24 @@ func decodePayload(payload []byte, scheme Scheme, want int) ([]byte, error) {
 	if n != want {
 		return nil, fmt.Errorf("decompressed length %d, want %d", n, want)
 	}
-	if scheme == BG4LZ4 {
-		data = bg4Regroup(data)
+	if scheme == LZ4 {
+		return d.grouped, nil
 	}
-	return data, nil
+	d.data = d.scratch(d.data, want)
+	bg4Regroup(d.data, d.grouped)
+	return d.data, nil
+}
+
+// scratch returns a buffer of length n. With reuse it keeps buf when it is
+// large enough and otherwise allocates room for the largest chunk.
+func (d *payloadDecoder) scratch(buf []byte, n int) []byte {
+	if !d.reuse {
+		return make([]byte, n)
+	}
+	if cap(buf) < n {
+		buf = make([]byte, chunker.MaxSize)
+	}
+	return buf[:n]
 }
 
 func compressLZ4(data []byte) ([]byte, error) {
@@ -733,8 +815,9 @@ func bg4Split(data []byte) []byte {
 	return out
 }
 
-func bg4Regroup(grouped []byte) []byte {
-	out := make([]byte, len(grouped))
+// bg4Regroup writes the regrouped form of grouped to out, which has the same
+// length.
+func bg4Regroup(out, grouped []byte) {
 	base, remainder := len(grouped)/4, len(grouped)%4
 	start := 0
 	for mod := 0; mod < 4; mod++ {
@@ -747,7 +830,6 @@ func bg4Regroup(grouped []byte) []byte {
 		}
 		start += length
 	}
-	return out
 }
 
 func putUint24(dst []byte, n uint32) {

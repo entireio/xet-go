@@ -11,6 +11,8 @@ readonly TARGETS=(
   './xethash:FuzzHashTextRoundTrip'
   './xethash:FuzzSubtreeMerge'
   './xorb:FuzzDecode'
+  './xorb:FuzzDecodeNetwork'
+  './xorb:FuzzVerifyComplete'
   './xorb:FuzzSchemesRoundTrip'
   './shard:FuzzDecode'
   './xetcas:FuzzParseContentRange'
