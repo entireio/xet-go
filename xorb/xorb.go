@@ -268,63 +268,70 @@ func EncodeComplete(object *Object, nonce [4]byte) ([]byte, error) {
 	if err != nil {
 		return nil, fmt.Errorf("xorb: encode complete: %w", err)
 	}
-	n := len(decoded.Chunks)
-	if n > MaxChunks {
-		return nil, errors.New("xorb: complete footer chunk count exceeds limit")
+	return appendComplete(object.Body[:contentEnd], decoded, nonce), nil
+}
+
+// appendComplete returns a new slice that holds content and the V1 footer of
+// decoded, the decoded form of content.
+func appendComplete(content []byte, decoded *Object, nonce [4]byte) []byte {
+	footer := footerFromChunks(decoded.Hash, decoded.Chunks, nonce)
+	out := make([]byte, len(content), len(content)+footerV1BaseSize+40*len(decoded.Chunks)+4)
+	copy(out, content)
+	return appendV1Footer(out, footer)
+}
+
+// footerFromChunks returns the V1 footer of a content section with the given
+// xorb hash and chunks.
+func footerFromChunks(hash xethash.Hash, chunks []Chunk, nonce [4]byte) *Footer {
+	n := len(chunks)
+	footer := &Footer{
+		Version:                 1,
+		XorbHash:                hash,
+		ChunkHashes:             make([]xethash.Hash, n),
+		ChunkBoundaryOffsets:    make([]uint32, n),
+		UnpackedChunkOffsets:    make([]uint32, n),
+		UniquenessNonce:         nonce,
+		HashesOffsetFromEnd:     uint32(52 + 40*n),
+		BoundariesOffsetFromEnd: uint32(40 + 8*n),
 	}
+	for i, chunk := range chunks {
+		footer.ChunkHashes[i] = chunk.Hash
+		footer.ChunkBoundaryOffsets[i] = chunk.SerializedOffset + chunk.SerializedLength
+		footer.UnpackedChunkOffsets[i] = chunk.UncompressedOffset + chunk.UncompressedLength
+	}
+	return footer
+}
+
+// appendV1Footer appends footer in the V1 layout, followed by its 4-byte
+// length trailer, to dst. It derives the chunk counts and the jump offsets
+// from len(footer.ChunkHashes).
+func appendV1Footer(dst []byte, footer *Footer) []byte {
+	n := len(footer.ChunkHashes)
 	infoLength := footerV1BaseSize + 40*n
-	out := make([]byte, contentEnd, contentEnd+infoLength+4)
-	copy(out, object.Body[:contentEnd])
-	footer := make([]byte, infoLength)
-	position := 0
-	copy(footer[position:position+7], footerMagic[:])
-	position += 7
-	footer[position] = 1
-	position++
-	copy(footer[position:position+xethash.Size], decoded.Hash[:])
-	position += xethash.Size
-	copy(footer[position:position+7], footerHashesMagic[:])
-	position += 7
-	footer[position] = 0
-	position++
-	binary.LittleEndian.PutUint32(footer[position:position+4], uint32(n))
-	position += 4
-	for _, chunk := range decoded.Chunks {
-		copy(footer[position:position+xethash.Size], chunk.Hash[:])
-		position += xethash.Size
+	dst = append(dst, footerMagic[:]...)
+	dst = append(dst, 1)
+	dst = append(dst, footer.XorbHash[:]...)
+	dst = append(dst, footerHashesMagic[:]...)
+	dst = append(dst, 0)
+	dst = binary.LittleEndian.AppendUint32(dst, uint32(n))
+	for _, hash := range footer.ChunkHashes {
+		dst = append(dst, hash[:]...)
 	}
-	copy(footer[position:position+7], footerBoundsMagic[:])
-	position += 7
-	footer[position] = 1
-	position++
-	binary.LittleEndian.PutUint32(footer[position:position+4], uint32(n))
-	position += 4
-	for _, chunk := range decoded.Chunks {
-		boundary := chunk.SerializedOffset + chunk.SerializedLength
-		binary.LittleEndian.PutUint32(footer[position:position+4], boundary)
-		position += 4
+	dst = append(dst, footerBoundsMagic[:]...)
+	dst = append(dst, 1)
+	dst = binary.LittleEndian.AppendUint32(dst, uint32(n))
+	for _, boundary := range footer.ChunkBoundaryOffsets {
+		dst = binary.LittleEndian.AppendUint32(dst, boundary)
 	}
-	for _, chunk := range decoded.Chunks {
-		boundary := chunk.UncompressedOffset + chunk.UncompressedLength
-		binary.LittleEndian.PutUint32(footer[position:position+4], boundary)
-		position += 4
+	for _, boundary := range footer.UnpackedChunkOffsets {
+		dst = binary.LittleEndian.AppendUint32(dst, boundary)
 	}
-	binary.LittleEndian.PutUint32(footer[position:position+4], uint32(n))
-	position += 4
-	hashesFromEnd := uint32(52 + 40*n)
-	boundsFromEnd := uint32(40 + 8*n)
-	binary.LittleEndian.PutUint32(footer[position:position+4], hashesFromEnd)
-	position += 4
-	binary.LittleEndian.PutUint32(footer[position:position+4], boundsFromEnd)
-	position += 4
-	copy(footer[position:position+4], nonce[:])
-	position += 16 // nonce followed by twelve reserved zero bytes
-	if position != infoLength {
-		return nil, errors.New("xorb: internal complete footer length mismatch")
-	}
-	out = append(out, footer...)
-	out = binary.LittleEndian.AppendUint32(out, uint32(infoLength))
-	return out, nil
+	dst = binary.LittleEndian.AppendUint32(dst, uint32(n))
+	dst = binary.LittleEndian.AppendUint32(dst, uint32(52+40*n))
+	dst = binary.LittleEndian.AppendUint32(dst, uint32(40+8*n))
+	dst = append(dst, footer.UniquenessNonce[:]...)
+	dst = append(dst, make([]byte, 12)...) // reserved
+	return binary.LittleEndian.AppendUint32(dst, uint32(infoLength))
 }
 
 // Decode validates and decompresses either a footerless network xorb or a V0

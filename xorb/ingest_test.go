@@ -3,6 +3,8 @@ package xorb
 import (
 	"bytes"
 	"errors"
+	"fmt"
+	"math/rand"
 	"strings"
 	"testing"
 
@@ -223,5 +225,60 @@ func TestHashMismatchIsDetectable(t *testing.T) {
 	_, err = ValidateIngested(ingested)
 	if !errors.Is(err, ErrHashMismatch) || !strings.HasPrefix(err.Error(), "xorb: ingested hash mismatch: declared ") {
 		t.Fatalf("ValidateIngested = %v", err)
+	}
+}
+
+func TestIngestNetworkDoesNotRetainBody(t *testing.T) {
+	object, err := Encode([][]byte{[]byte("caller keeps the body"), bytes.Repeat([]byte("lz4"), 500)}, Auto)
+	if err != nil {
+		t.Fatal(err)
+	}
+	body := append([]byte(nil), object.Body...)
+	ingested, err := IngestNetwork(body, object.Hash)
+	if err != nil {
+		t.Fatal(err)
+	}
+	want, err := EncodeComplete(object, [4]byte{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	for i := range body {
+		body[i] ^= 0xff
+	}
+	if !bytes.Equal(ingested.Complete, want) {
+		t.Fatal("complete object changed when the caller changed the body")
+	}
+}
+
+// ingestBenchmarkBody returns a network xorb of 256 chunks of 64 KiB: half
+// compressible text stored with LZ4 and half random data stored uncompressed.
+func ingestBenchmarkBody(b *testing.B) *Object {
+	b.Helper()
+	rng := rand.New(rand.NewSource(3))
+	chunks := make([][]byte, 256)
+	for i := range chunks {
+		chunk := make([]byte, 64<<10)
+		if i%2 == 0 {
+			copy(chunk, bytes.Repeat([]byte(fmt.Sprintf("line %d of a text file\n", i)), len(chunk)))
+		} else {
+			_, _ = rng.Read(chunk)
+		}
+		chunks[i] = chunk
+	}
+	object, err := Encode(chunks, Auto)
+	if err != nil {
+		b.Fatal(err)
+	}
+	return object
+}
+
+func BenchmarkIngestNetwork(b *testing.B) {
+	object := ingestBenchmarkBody(b)
+	b.SetBytes(int64(len(object.Body)))
+	b.ReportAllocs()
+	for b.Loop() {
+		if _, err := IngestNetwork(object.Body, object.Hash); err != nil {
+			b.Fatal(err)
+		}
 	}
 }

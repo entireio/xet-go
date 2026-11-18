@@ -54,26 +54,29 @@ type Ingested struct {
 // accepts only the network form (see DecodeNetwork): a legacy trailer or a
 // complete/cache footer fails as malformed chunk data. A well-formed body whose
 // chunks hash to another xorb fails with an error that wraps ErrHashMismatch.
+//
+// IngestNetwork decodes body once and does not retain it: Complete is a new
+// slice, so the caller may reuse or change body afterwards.
 func IngestNetwork(body []byte, expected xethash.Hash) (*Ingested, error) {
 	if len(body) > MaxNetworkSize {
 		return nil, fmt.Errorf("xorb: network object size %d exceeds maximum %d", len(body), MaxNetworkSize)
 	}
-	object, err := DecodeNetwork(body)
+	if len(body) == 0 {
+		return nil, fmt.Errorf("xorb: ingest network object: %w", &FormatError{Reason: "empty object"})
+	}
+	// Uncompressed chunk data aliases body. No chunk data leaves this call.
+	object, err := decodeContent(body)
 	if err != nil {
 		return nil, fmt.Errorf("xorb: ingest network object: %w", err)
 	}
 	if object.Hash != expected {
 		return nil, fmt.Errorf("%w: expected %s, computed %s", ErrHashMismatch, expected, object.Hash)
 	}
-	complete, err := EncodeComplete(object, [4]byte{})
-	if err != nil {
-		return nil, fmt.Errorf("xorb: build complete object: %w", err)
-	}
 	result := &Ingested{
 		Hash:             object.Hash,
 		NetworkBytes:     uint32(len(body)),
 		UncompressedSize: object.UncompressedSize,
-		Complete:         complete,
+		Complete:         appendComplete(body, object, [4]byte{}),
 		Chunks:           make([]IngestedChunk, len(object.Chunks)),
 	}
 	for i, chunk := range object.Chunks {
