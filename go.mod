@@ -1,4 +1,4 @@
-module github.com/entireio/xet-go
+module github.com/jmwoliver/xet-go
 
 go 1.26.0
 
@@ -7,8 +7,8 @@ require (
 	github.com/aws/aws-sdk-go-v2/credentials v1.19.35
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.107.1
 	github.com/aws/smithy-go v1.27.7
-	github.com/entireio/blake3 v0.0.0-20261118042152-a13cbc9148bd
 	github.com/jackc/pgx/v5 v5.10.0
+	github.com/jmwoliver/blake3 v0.0.0-20260801225300-b11c1cdefad3
 	github.com/klauspost/compress v1.18.7
 	github.com/pierrec/lz4/v4 v4.1.27
 	golang.org/x/sys v0.44.0

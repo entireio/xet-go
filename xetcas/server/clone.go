@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"slices"
 
-	"github.com/entireio/xet-go/shard"
-	"github.com/entireio/xet-go/xethash"
+	"github.com/jmwoliver/xet-go/shard"
+	"github.com/jmwoliver/xet-go/xethash"
 )
 
 // CloneFileBetweenNamespaces is a trusted embedding capability that publishes

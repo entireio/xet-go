@@ -12,8 +12,8 @@ import (
 	"slices"
 
 	"github.com/jackc/pgx/v5"
-	"github.com/entireio/xet-go/xetcas/server"
-	"github.com/entireio/xet-go/xethash"
+	"github.com/jmwoliver/xet-go/xetcas/server"
+	"github.com/jmwoliver/xet-go/xethash"
 )
 
 func enc(v any) ([]byte, error) {

@@ -9,8 +9,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/entireio/xet-go/model"
-	casserver "github.com/entireio/xet-go/xetcas/server"
+	"github.com/jmwoliver/xet-go/model"
+	casserver "github.com/jmwoliver/xet-go/xetcas/server"
 )
 
 func TestPrincipalStaticAuthenticationAndRepositoryNamespace(t *testing.T) {

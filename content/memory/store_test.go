@@ -14,7 +14,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/entireio/xet-go/content"
+	"github.com/jmwoliver/xet-go/content"
 )
 
 func TestStorePublicationAndCorruption(t *testing.T) {

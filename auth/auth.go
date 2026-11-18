@@ -14,8 +14,8 @@ import (
 	"unicode"
 	"unicode/utf8"
 
-	"github.com/entireio/xet-go/model"
-	casserver "github.com/entireio/xet-go/xetcas/server"
+	"github.com/jmwoliver/xet-go/model"
+	casserver "github.com/jmwoliver/xet-go/xetcas/server"
 )
 
 var (

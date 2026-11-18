@@ -11,11 +11,11 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/entireio/xet-go/shard"
-	"github.com/entireio/xet-go/xetcas"
-	"github.com/entireio/xet-go/xetcas/server"
-	"github.com/entireio/xet-go/xethash"
-	"github.com/entireio/xet-go/xorb"
+	"github.com/jmwoliver/xet-go/shard"
+	"github.com/jmwoliver/xet-go/xetcas"
+	"github.com/jmwoliver/xet-go/xetcas/server"
+	"github.com/jmwoliver/xet-go/xethash"
+	"github.com/jmwoliver/xet-go/xorb"
 )
 
 func TestPostgreSQLCloneFileBetweenNamespacesIntegration(t *testing.T) {

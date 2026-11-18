@@ -12,8 +12,7 @@ security migration intentionally superseded the recorded compatibility gate.
 ## Outcome
 
 The recommended implementation is now the published
-`github.com/entireio/blake3` fork (Entire's copy of
-`github.com/jmwoliver/blake3`) of
+`github.com/jmwoliver/blake3` fork of
 `lukechampine.com/blake3` v1.4.1. It retains Luke's portable, AMD64 AVX2, and
 AVX-512 implementations, adds the attributed GoForge ARM64 NEON four-chunk
 kernel, and provides a serial hasher for callers that already own the outer

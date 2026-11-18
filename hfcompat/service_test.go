@@ -18,16 +18,16 @@ import (
 	"testing"
 	"time"
 
-	"github.com/entireio/xet-go/auth"
-	"github.com/entireio/xet-go/bucket"
-	"github.com/entireio/xet-go/catalog"
-	catalogmemory "github.com/entireio/xet-go/catalog/memory"
-	"github.com/entireio/xet-go/content"
-	contentmemory "github.com/entireio/xet-go/content/memory"
-	"github.com/entireio/xet-go/model"
-	"github.com/entireio/xet-go/xetcas"
-	casserver "github.com/entireio/xet-go/xetcas/server"
-	"github.com/entireio/xet-go/xethash"
+	"github.com/jmwoliver/xet-go/auth"
+	"github.com/jmwoliver/xet-go/bucket"
+	"github.com/jmwoliver/xet-go/catalog"
+	catalogmemory "github.com/jmwoliver/xet-go/catalog/memory"
+	"github.com/jmwoliver/xet-go/content"
+	contentmemory "github.com/jmwoliver/xet-go/content/memory"
+	"github.com/jmwoliver/xet-go/model"
+	"github.com/jmwoliver/xet-go/xetcas"
+	casserver "github.com/jmwoliver/xet-go/xetcas/server"
+	"github.com/jmwoliver/xet-go/xethash"
 )
 
 type handlerFixture struct {

@@ -19,7 +19,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/entireio/xet-go/xethash"
+	"github.com/jmwoliver/xet-go/xethash"
 )
 
 const (

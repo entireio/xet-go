@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/entireio/xet-go/catalog"
-	"github.com/entireio/xet-go/model"
+	"github.com/jmwoliver/xet-go/catalog"
+	"github.com/jmwoliver/xet-go/model"
 )
 
 func TestCursorValidationRejectsMalformedState(t *testing.T) {

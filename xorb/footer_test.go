@@ -9,8 +9,8 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/entireio/xet-go/chunker"
-	"github.com/entireio/xet-go/xethash"
+	"github.com/jmwoliver/xet-go/chunker"
+	"github.com/jmwoliver/xet-go/xethash"
 )
 
 // completeForTest returns an object and its complete form with nonce.

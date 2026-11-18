@@ -15,11 +15,11 @@ import (
 	"testing"
 	"time"
 
-	xet "github.com/entireio/xet-go"
-	"github.com/entireio/xet-go/shard"
-	"github.com/entireio/xet-go/xetcas"
-	"github.com/entireio/xet-go/xethash"
-	"github.com/entireio/xet-go/xorb"
+	xet "github.com/jmwoliver/xet-go"
+	"github.com/jmwoliver/xet-go/shard"
+	"github.com/jmwoliver/xet-go/xetcas"
+	"github.com/jmwoliver/xet-go/xethash"
+	"github.com/jmwoliver/xet-go/xorb"
 )
 
 func TestHTTPHandlerGoClientEndToEnd(t *testing.T) {

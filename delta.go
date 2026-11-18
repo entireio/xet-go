@@ -9,9 +9,9 @@ import (
 	"sort"
 	"time"
 
-	"github.com/entireio/xet-go/shard"
-	"github.com/entireio/xet-go/xetcas"
-	"github.com/entireio/xet-go/xethash"
+	"github.com/jmwoliver/xet-go/shard"
+	"github.com/jmwoliver/xet-go/xetcas"
+	"github.com/jmwoliver/xet-go/xethash"
 )
 
 // DeltaEdit replaces Original, expressed in the original file's coordinates,
