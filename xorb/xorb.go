@@ -205,12 +205,9 @@ func encode(chunks [][]byte, schemes []Scheme) (*Object, error) {
 	payloads := make([][]byte, len(chunks))
 	serializedTotal := 0
 	for i, data := range chunks {
-		used, payload, err := encodePayload(data, schemes[i])
+		used, payload, err := encodeChunkPayload(data, schemes[i])
 		if err != nil {
 			return nil, fmt.Errorf("xorb: chunk %d: %w", i, err)
-		}
-		if len(payload) > maxUint24 {
-			return nil, fmt.Errorf("xorb: chunk %d serialized payload too large", i)
 		}
 		start := serializedTotal
 		serializedTotal += HeaderSize + len(payload)
@@ -233,16 +230,12 @@ func encode(chunks [][]byte, schemes []Scheme) (*Object, error) {
 		object.UncompressedSize += uint32(len(data))
 		nodes = append(nodes, xethash.Node{Hash: hash, Size: uint64(len(data))})
 	}
-	body := make([]byte, serializedTotal)
+	body := make([]byte, 0, serializedTotal)
 	for i, chunk := range object.Chunks {
-		start := int(chunk.SerializedOffset)
-		header := body[start : start+HeaderSize]
-		putUint24(header[1:4], uint32(len(payloads[i])))
-		header[4] = byte(chunk.Scheme)
-		putUint24(header[5:8], chunk.UncompressedLength)
-		copy(body[start+HeaderSize:], payloads[i])
+		body = appendSerializedChunk(body, chunk.Scheme, payloads[i], len(chunks[i]))
 		if chunk.Scheme == None {
-			object.Chunks[i].Data = body[start+HeaderSize : start+HeaderSize+len(payloads[i])]
+			start := int(chunk.SerializedOffset) + HeaderSize
+			object.Chunks[i].Data = body[start : start+len(payloads[i])]
 		}
 	}
 	object.Body = body
@@ -609,6 +602,29 @@ func validateFooter(object *Object, footer *Footer) error {
 		footer.UnpackedChunkOffsets[i] = unpacked
 	}
 	return nil
+}
+
+// encodeChunkPayload compresses one chunk as encodePayload does and checks
+// that the payload fits its header.
+func encodeChunkPayload(data []byte, requested Scheme) (Scheme, []byte, error) {
+	used, payload, err := encodePayload(data, requested)
+	if err != nil {
+		return 0, nil, err
+	}
+	if len(payload) > maxUint24 {
+		return 0, nil, errors.New("serialized payload too large")
+	}
+	return used, payload, nil
+}
+
+// appendSerializedChunk appends the header and the payload of one chunk of
+// rawLen unpacked bytes to dst.
+func appendSerializedChunk(dst []byte, scheme Scheme, payload []byte, rawLen int) []byte {
+	var header [HeaderSize]byte
+	putUint24(header[1:4], uint32(len(payload)))
+	header[4] = byte(scheme)
+	putUint24(header[5:8], uint32(rawLen))
+	return append(append(dst, header[:]...), payload...)
 }
 
 func encodePayload(data []byte, requested Scheme) (Scheme, []byte, error) {
