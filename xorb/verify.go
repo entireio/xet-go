@@ -7,8 +7,8 @@ import (
 	"io"
 	"runtime"
 
-	"github.com/entireio/xet-go/chunker"
-	"github.com/entireio/xet-go/xethash"
+	"github.com/jmwoliver/xet-go/chunker"
+	"github.com/jmwoliver/xet-go/xethash"
 )
 
 // hashSlotSize is the capacity of one decoded chunk held for hashing. The

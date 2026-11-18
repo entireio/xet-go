@@ -10,8 +10,8 @@ import (
 	"testing"
 	"testing/iotest"
 
-	"github.com/entireio/xet-go/chunker"
-	"github.com/entireio/xet-go/xethash"
+	"github.com/jmwoliver/xet-go/chunker"
+	"github.com/jmwoliver/xet-go/xethash"
 )
 
 var errSource = errors.New("source failed")

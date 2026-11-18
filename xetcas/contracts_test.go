@@ -14,7 +14,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/entireio/xet-go/xethash"
+	"github.com/jmwoliver/xet-go/xethash"
 )
 
 func TestClientConstructionContracts(t *testing.T) {

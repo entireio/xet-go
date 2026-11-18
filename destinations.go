@@ -10,8 +10,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/entireio/xet-go/xetcas"
-	"github.com/entireio/xet-go/xethash"
+	"github.com/jmwoliver/xet-go/xetcas"
+	"github.com/jmwoliver/xet-go/xethash"
 )
 
 // DownloadAt reconstructs a complete file into dst starting at offset zero.

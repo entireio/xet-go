@@ -7,7 +7,7 @@ import (
 	"math"
 	"sort"
 
-	"github.com/entireio/xet-go/xethash"
+	"github.com/jmwoliver/xet-go/xethash"
 )
 
 // XorbLookup resolves durable, server-ingested xorb metadata by identity.

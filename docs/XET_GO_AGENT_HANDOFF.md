@@ -45,7 +45,7 @@ go test ./...
 
 Treat every existing modification as intentional until it has been reviewed. Make small commits organized by behavior. Do not fold unrelated current changes into a rewrite.
 
-The repository/module-path discrepancy has been resolved with the owner: `github.com/jmwoliver/xet-go` is the canonical repository and Go module path. The deliberate one-time migration was completed before publishing stable module versions. The Entire copy at `github.com/entireio/xet-go` publishes under its own module path, so that modules can depend on it without a `replace` directive.
+The repository/module-path discrepancy has been resolved with the owner: `github.com/jmwoliver/xet-go` is the canonical repository and Go module path. The deliberate one-time migration was completed before publishing stable module versions.
 
 ## 3. Product boundary
 

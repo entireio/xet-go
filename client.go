@@ -8,9 +8,9 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/entireio/xet-go/xetcas"
-	"github.com/entireio/xet-go/xethash"
-	"github.com/entireio/xet-go/xorb"
+	"github.com/jmwoliver/xet-go/xetcas"
+	"github.com/jmwoliver/xet-go/xethash"
+	"github.com/jmwoliver/xet-go/xorb"
 )
 
 // Protocol is the Xet CAS data-plane surface consumed by the transfer engine.

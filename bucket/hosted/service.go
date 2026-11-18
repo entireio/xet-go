@@ -9,12 +9,12 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/entireio/xet-go/auth"
-	"github.com/entireio/xet-go/bucket"
-	"github.com/entireio/xet-go/catalog"
-	"github.com/entireio/xet-go/content"
-	"github.com/entireio/xet-go/hfcompat"
-	casserver "github.com/entireio/xet-go/xetcas/server"
+	"github.com/jmwoliver/xet-go/auth"
+	"github.com/jmwoliver/xet-go/bucket"
+	"github.com/jmwoliver/xet-go/catalog"
+	"github.com/jmwoliver/xet-go/content"
+	"github.com/jmwoliver/xet-go/hfcompat"
+	casserver "github.com/jmwoliver/xet-go/xetcas/server"
 )
 
 var ErrInvalid = errors.New("hosted bucket: invalid configuration")

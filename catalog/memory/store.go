@@ -14,8 +14,8 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/entireio/xet-go/catalog"
-	"github.com/entireio/xet-go/model"
+	"github.com/jmwoliver/xet-go/catalog"
+	"github.com/jmwoliver/xet-go/model"
 )
 
 var _ catalog.Catalog = (*Store)(nil)

@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/entireio/xet-go/content"
+	"github.com/jmwoliver/xet-go/content"
 )
 
 func TestReaderVerification(t *testing.T) {

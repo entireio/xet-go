@@ -13,8 +13,8 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	awss3 "github.com/aws/aws-sdk-go-v2/service/s3"
-	"github.com/entireio/xet-go/xetcas"
-	casserver "github.com/entireio/xet-go/xetcas/server"
+	"github.com/jmwoliver/xet-go/xetcas"
+	casserver "github.com/jmwoliver/xet-go/xetcas/server"
 )
 
 // TestS3CompatibleIntegration is an opt-in contract against a real

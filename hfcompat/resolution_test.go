@@ -7,9 +7,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/entireio/xet-go/bucket"
-	"github.com/entireio/xet-go/catalog"
-	"github.com/entireio/xet-go/model"
+	"github.com/jmwoliver/xet-go/bucket"
+	"github.com/jmwoliver/xet-go/catalog"
+	"github.com/jmwoliver/xet-go/model"
 )
 
 type resolutionDecorator struct {

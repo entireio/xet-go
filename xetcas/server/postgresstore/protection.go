@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5"
-	"github.com/entireio/xet-go/xetcas/server"
-	"github.com/entireio/xet-go/xethash"
+	"github.com/jmwoliver/xet-go/xetcas/server"
+	"github.com/jmwoliver/xet-go/xethash"
 )
 
 func nanotime(t time.Time) (int64, error) {

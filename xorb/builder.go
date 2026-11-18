@@ -4,8 +4,8 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/entireio/xet-go/chunker"
-	"github.com/entireio/xet-go/xethash"
+	"github.com/jmwoliver/xet-go/chunker"
+	"github.com/jmwoliver/xet-go/xethash"
 )
 
 // ErrFull reports a chunk that does not fit in the xorb that a Builder

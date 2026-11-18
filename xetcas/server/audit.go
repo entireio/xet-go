@@ -7,9 +7,9 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/entireio/xet-go/shard"
-	"github.com/entireio/xet-go/xethash"
-	"github.com/entireio/xet-go/xorb"
+	"github.com/jmwoliver/xet-go/shard"
+	"github.com/jmwoliver/xet-go/xethash"
+	"github.com/jmwoliver/xet-go/xorb"
 )
 
 var errAuditDependency = errors.New("xet CAS server: audit dependency check stopped")

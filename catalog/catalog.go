@@ -6,7 +6,7 @@ import (
 	"context"
 	"errors"
 
-	"github.com/entireio/xet-go/model"
+	"github.com/jmwoliver/xet-go/model"
 )
 
 var (

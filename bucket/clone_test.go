@@ -6,13 +6,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/entireio/xet-go/catalog"
-	"github.com/entireio/xet-go/catalog/memory"
-	contentmemory "github.com/entireio/xet-go/content/memory"
-	"github.com/entireio/xet-go/model"
-	"github.com/entireio/xet-go/xetcas"
-	casserver "github.com/entireio/xet-go/xetcas/server"
-	"github.com/entireio/xet-go/xethash"
+	"github.com/jmwoliver/xet-go/catalog"
+	"github.com/jmwoliver/xet-go/catalog/memory"
+	contentmemory "github.com/jmwoliver/xet-go/content/memory"
+	"github.com/jmwoliver/xet-go/model"
+	"github.com/jmwoliver/xet-go/xetcas"
+	casserver "github.com/jmwoliver/xet-go/xetcas/server"
+	"github.com/jmwoliver/xet-go/xethash"
 )
 
 func TestServiceCloneXetFileDerivesNamespacesAndEnablesSnapshot(t *testing.T) {

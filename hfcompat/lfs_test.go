@@ -17,9 +17,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/entireio/xet-go/bucket"
-	"github.com/entireio/xet-go/model"
-	"github.com/entireio/xet-go/xethash"
+	"github.com/jmwoliver/xet-go/bucket"
+	"github.com/jmwoliver/xet-go/model"
+	"github.com/jmwoliver/xet-go/xethash"
 )
 
 type lfsObjectKey struct {
