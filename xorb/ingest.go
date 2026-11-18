@@ -119,7 +119,7 @@ func ValidateIngested(value *Ingested) (int64, error) {
 		}
 		if uint64(chunk.SerializedOffset) != serializedEnd ||
 			chunk.SerializedLength <= HeaderSize ||
-			chunk.SerializedLength > HeaderSize+2*chunker.MaxSize {
+			chunk.SerializedLength > MaxSerializedChunk {
 			return 0, fmt.Errorf("xorb: ingested chunk %d has a non-contiguous serialized range", i)
 		}
 		if uint64(chunk.UncompressedOffset) != uncompressedEnd ||
@@ -139,7 +139,7 @@ func ValidateIngested(value *Ingested) (int64, error) {
 	if computed := xethash.Xorb(nodes); computed != value.Hash {
 		return 0, &hashMismatchError{fmt.Sprintf("xorb: ingested hash mismatch: declared %s, computed %s", value.Hash, computed)}
 	}
-	completeSize := int64(value.NetworkBytes) + footerV1BaseSize + 40*int64(len(value.Chunks)) + 4
+	completeSize := int64(value.NetworkBytes) + int64(FooterSize(len(value.Chunks)))
 	if value.Complete != nil && int64(len(value.Complete)) != completeSize {
 		return 0, fmt.Errorf("xorb: complete object length %d, expected %d", len(value.Complete), completeSize)
 	}

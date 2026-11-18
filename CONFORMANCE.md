@@ -20,7 +20,7 @@ to differ while preserving bounded, cancelable, backoff/recovery semantics.
 | Hash text byte order and domain-separated BLAKE3 | `TestHashOfficialEndianVector`, `TestOfficialMerkleVectors`, `TestRustDifferentialCorpus` | Canonical text, chunk/xorb/file/verification identities |
 | Compact Merkle subtrees | `TestRustDifferentialMerkleSubtree`, `TestSubtreeMergeAtEverySplit`, `FuzzSubtreeMerge` | Exact JSON shape, boundary flags, merge result, and final identity |
 | Footerless network xorbs | `TestRustDifferentialXorb`, `TestSchemesRoundTrip`, `TestDecodeNetworkBodyThatLooksFramed`, `FuzzDecode`, `FuzzDecodeNetwork` | None form byte-exact; none/LZ4/BG4-LZ4/auto cross-decode and scheme selection; a body whose last uncompressed chunk ends in trailer or footer bytes stays a network xorb |
-| Complete/cache xorbs | `TestRustDifferentialCompleteXorb`, `TestCompleteV1RoundTrip`, `TestCompleteV0Decode` | Current V1 byte-exact; historical V0 decode |
+| Complete/cache xorbs | `TestRustDifferentialCompleteXorb`, `TestCompleteV1RoundTrip`, `TestCompleteV0Decode`, `TestFooterGolden`, `TestFooterCodecMatchesEncodeComplete` | Current V1 byte-exact; historical V0 decode; the exported V1 footer codec round-trips `EncodeComplete` output |
 | Official historical xorb | `TestOfficialReferenceCorpus`, `TestOfficialLegacyTrailerDecode` | Legacy `XETB` terminator accepted on decode only |
 | Footerless upload shards | `TestRustDifferentialShard`, `TestUploadRoundTripAndLayout` | Byte-exact sorted file/xorb records, verification and SHA-256 extensions |
 | Cache/global-dedup shards | `TestOfficialReferenceCorpus`, `TestFooterValidation`, `TestGlobalDedupProtectedShard` | All four official shard variants, footer bounds, protected lookup hashes |

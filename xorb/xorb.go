@@ -275,9 +275,9 @@ func EncodeComplete(object *Object, nonce [4]byte) ([]byte, error) {
 // decoded, the decoded form of content.
 func appendComplete(content []byte, decoded *Object, nonce [4]byte) []byte {
 	footer := footerFromChunks(decoded.Hash, decoded.Chunks, nonce)
-	out := make([]byte, len(content), len(content)+footerV1BaseSize+40*len(decoded.Chunks)+4)
+	out := make([]byte, len(content), len(content)+FooterSize(len(decoded.Chunks)))
 	copy(out, content)
-	return appendV1Footer(out, footer)
+	return AppendFooter(out, footer)
 }
 
 // footerFromChunks returns the V1 footer of a content section with the given
@@ -300,38 +300,6 @@ func footerFromChunks(hash xethash.Hash, chunks []Chunk, nonce [4]byte) *Footer 
 		footer.UnpackedChunkOffsets[i] = chunk.UncompressedOffset + chunk.UncompressedLength
 	}
 	return footer
-}
-
-// appendV1Footer appends footer in the V1 layout, followed by its 4-byte
-// length trailer, to dst. It derives the chunk counts and the jump offsets
-// from len(footer.ChunkHashes).
-func appendV1Footer(dst []byte, footer *Footer) []byte {
-	n := len(footer.ChunkHashes)
-	infoLength := footerV1BaseSize + 40*n
-	dst = append(dst, footerMagic[:]...)
-	dst = append(dst, 1)
-	dst = append(dst, footer.XorbHash[:]...)
-	dst = append(dst, footerHashesMagic[:]...)
-	dst = append(dst, 0)
-	dst = binary.LittleEndian.AppendUint32(dst, uint32(n))
-	for _, hash := range footer.ChunkHashes {
-		dst = append(dst, hash[:]...)
-	}
-	dst = append(dst, footerBoundsMagic[:]...)
-	dst = append(dst, 1)
-	dst = binary.LittleEndian.AppendUint32(dst, uint32(n))
-	for _, boundary := range footer.ChunkBoundaryOffsets {
-		dst = binary.LittleEndian.AppendUint32(dst, boundary)
-	}
-	for _, boundary := range footer.UnpackedChunkOffsets {
-		dst = binary.LittleEndian.AppendUint32(dst, boundary)
-	}
-	dst = binary.LittleEndian.AppendUint32(dst, uint32(n))
-	dst = binary.LittleEndian.AppendUint32(dst, uint32(52+40*n))
-	dst = binary.LittleEndian.AppendUint32(dst, uint32(40+8*n))
-	dst = append(dst, footer.UniquenessNonce[:]...)
-	dst = append(dst, make([]byte, 12)...) // reserved
-	return binary.LittleEndian.AppendUint32(dst, uint32(infoLength))
 }
 
 // Decode validates and decompresses either a footerless network xorb or a V0
@@ -403,7 +371,7 @@ func networkFramed(body []byte) bool {
 			return false
 		}
 		compressedLen := int(getUint24(body[offset+1 : offset+4]))
-		if compressedLen == 0 || compressedLen > 2*chunker.MaxSize {
+		if compressedLen == 0 || compressedLen > MaxSerializedChunk-HeaderSize {
 			return false
 		}
 		offset += HeaderSize + compressedLen
@@ -425,7 +393,7 @@ func ReadChunk(reader io.Reader) (Chunk, error) {
 		return Chunk{}, fmt.Errorf("xorb: read serialized chunk header: %w", err)
 	}
 	compressedLen := int(getUint24(serialized[1:4]))
-	if compressedLen == 0 || compressedLen > 2*chunker.MaxSize {
+	if compressedLen == 0 || compressedLen > MaxSerializedChunk-HeaderSize {
 		// Decode the header through the canonical parser so callers receive the
 		// same FormatError taxonomy as whole-xorb decoding.
 		_, err := decodeContent(serialized)
@@ -467,7 +435,7 @@ func decodeContent(body []byte) (*Object, error) {
 		if compressedLen == 0 {
 			return nil, &FormatError{Offset: offset + 1, Reason: "zero compressed length"}
 		}
-		if compressedLen > 2*chunker.MaxSize {
+		if compressedLen > MaxSerializedChunk-HeaderSize {
 			return nil, &FormatError{Offset: offset + 1, Reason: "compressed length exceeds limit"}
 		}
 		if uncompressedLen == 0 || uncompressedLen > chunker.MaxSize {

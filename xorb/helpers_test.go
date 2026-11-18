@@ -14,3 +14,10 @@ func requireFormatError(t testing.TB, what string, err error) {
 		t.Fatalf("%s = %v, want a FormatError", what, err)
 	}
 }
+
+// flipByte returns a copy of b with the byte at offset inverted.
+func flipByte(b []byte, offset int) []byte {
+	out := append([]byte(nil), b...)
+	out[offset] ^= 0xff
+	return out
+}
