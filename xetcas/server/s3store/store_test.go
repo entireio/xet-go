@@ -20,9 +20,9 @@ import (
 	awss3 "github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"github.com/aws/smithy-go"
-	"github.com/jmwoliver/xet-go/xetcas"
-	casserver "github.com/jmwoliver/xet-go/xetcas/server"
-	"github.com/jmwoliver/xet-go/xethash"
+	"github.com/entireio/xet-go/xetcas"
+	casserver "github.com/entireio/xet-go/xetcas/server"
+	"github.com/entireio/xet-go/xethash"
 )
 
 type memoryS3 struct {

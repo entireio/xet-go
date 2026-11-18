@@ -8,10 +8,10 @@ import (
 	"math"
 	"testing"
 
-	"github.com/jmwoliver/xet-go/chunker"
-	"github.com/jmwoliver/xet-go/shard"
-	"github.com/jmwoliver/xet-go/xetcas"
-	"github.com/jmwoliver/xet-go/xethash"
+	"github.com/entireio/xet-go/chunker"
+	"github.com/entireio/xet-go/shard"
+	"github.com/entireio/xet-go/xetcas"
+	"github.com/entireio/xet-go/xethash"
 )
 
 func TestUploadDeltaReusesStableOriginalTerms(t *testing.T) {

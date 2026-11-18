@@ -9,10 +9,10 @@ import (
 	"io"
 	"sort"
 
-	"github.com/jmwoliver/xet-go/chunker"
-	"github.com/jmwoliver/xet-go/xetcas"
-	"github.com/jmwoliver/xet-go/xethash"
-	"github.com/jmwoliver/xet-go/xorb"
+	"github.com/entireio/xet-go/chunker"
+	"github.com/entireio/xet-go/xetcas"
+	"github.com/entireio/xet-go/xethash"
+	"github.com/entireio/xet-go/xorb"
 )
 
 // DownloadReport describes verified logical and physical work. WholeFileHash

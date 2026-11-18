@@ -16,9 +16,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/jmwoliver/xet-go/catalog"
-	"github.com/jmwoliver/xet-go/model"
-	"github.com/jmwoliver/xet-go/xethash"
+	"github.com/entireio/xet-go/catalog"
+	"github.com/entireio/xet-go/model"
+	"github.com/entireio/xet-go/xethash"
 	_ "modernc.org/sqlite"
 )
 

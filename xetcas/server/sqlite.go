@@ -13,7 +13,7 @@ import (
 	"reflect"
 	"time"
 
-	"github.com/jmwoliver/xet-go/xethash"
+	"github.com/entireio/xet-go/xethash"
 	_ "modernc.org/sqlite"
 )
 

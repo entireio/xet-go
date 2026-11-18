@@ -8,7 +8,7 @@ import (
 	"math"
 	"time"
 
-	"github.com/jmwoliver/xet-go/xetcas/server"
+	"github.com/entireio/xet-go/xetcas/server"
 )
 
 type cursor struct {

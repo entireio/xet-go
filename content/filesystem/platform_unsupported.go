@@ -2,7 +2,7 @@
 
 package filesystem
 
-import "github.com/jmwoliver/xet-go/content"
+import "github.com/entireio/xet-go/content"
 
 func checkDurabilitySupported() error { return content.ErrDurabilityUnsupported }
 

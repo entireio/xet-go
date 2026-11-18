@@ -11,10 +11,10 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/jmwoliver/xet-go/shard"
-	"github.com/jmwoliver/xet-go/xetcas/server"
-	"github.com/jmwoliver/xet-go/xethash"
-	"github.com/jmwoliver/xet-go/xorb"
+	"github.com/entireio/xet-go/shard"
+	"github.com/entireio/xet-go/xetcas/server"
+	"github.com/entireio/xet-go/xethash"
+	"github.com/entireio/xet-go/xorb"
 )
 
 func TestOptions(t *testing.T) {

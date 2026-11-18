@@ -5,6 +5,10 @@ It produces and consumes official Xet hashes, chunks, xorbs, metadata shards,
 CAS requests, reconstruction recipes, and sparse delta uploads without invoking
 Rust or requiring a Hugging Face-specific SDK at runtime.
 
+This copy is published as `github.com/entireio/xet-go`. It tracks
+[jmwoliver/xet-go](https://github.com/jmwoliver/xet-go) under its own module
+path and uses the `github.com/entireio/blake3` copy of its BLAKE3 fork.
+
 The module is deliberately hosting-decoupled. Callers provide an already-issued
 Xet CAS endpoint and bearer token through `xetcas.CASAccessProvider`; repository
 lookup, host authentication, and compatible commit transport remain in the
@@ -118,7 +122,7 @@ source baseline.
   empty for an unauthenticated local CAS.
 
 ```sh
-go get github.com/jmwoliver/xet-go
+go get github.com/entireio/xet-go
 ```
 
 The release library has no C or Rust dependency. Its direct dependencies are

@@ -5,9 +5,9 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/jmwoliver/xet-go/bucket"
-	"github.com/jmwoliver/xet-go/model"
-	"github.com/jmwoliver/xet-go/xethash"
+	"github.com/entireio/xet-go/bucket"
+	"github.com/entireio/xet-go/model"
+	"github.com/entireio/xet-go/xethash"
 )
 
 func TestServiceExposesTrustedBucketCloneCapability(t *testing.T) {

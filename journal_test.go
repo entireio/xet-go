@@ -9,8 +9,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jmwoliver/xet-go/xethash"
-	"github.com/jmwoliver/xet-go/xorb"
+	"github.com/entireio/xet-go/xethash"
+	"github.com/entireio/xet-go/xorb"
 )
 
 func TestDiskUploadJournalLifecycleAndCorruption(t *testing.T) {

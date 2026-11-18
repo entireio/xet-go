@@ -107,13 +107,13 @@ xcrun llvm-objdump --disassemble-symbols=_blake3_hash_many_neon "${RUST_BENCHMAR
 (
 	cd "${ROOT_DIR}"
 	go test -run '^$' \
-		-gcflags='github.com/jmwoliver/xet-go/xethash=-m=2' ./xethash
+		-gcflags='github.com/entireio/xet-go/xethash=-m=2' ./xethash
 ) >"${OUTPUT_DIR}/go-xethash-escape-inline.txt" 2>&1
 (
 	cd "${ROOT_DIR}"
 	go test -run '^$' \
-		-gcflags='github.com/jmwoliver/blake3/...=-m=2' \
-		github.com/jmwoliver/blake3/...
+		-gcflags='github.com/entireio/blake3/...=-m=2' \
+		github.com/entireio/blake3/...
 ) >"${OUTPUT_DIR}/go-blake3-escape-inline.txt" 2>&1
 
 run_timed() {

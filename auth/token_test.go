@@ -12,7 +12,7 @@ import (
 	"testing"
 	"time"
 
-	casserver "github.com/jmwoliver/xet-go/xetcas/server"
+	casserver "github.com/entireio/xet-go/xetcas/server"
 )
 
 func TestCASTokenIssueVerifyAndOperationScope(t *testing.T) {

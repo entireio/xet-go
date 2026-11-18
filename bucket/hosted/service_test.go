@@ -9,16 +9,16 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jmwoliver/xet-go/auth"
-	"github.com/jmwoliver/xet-go/catalog"
-	"github.com/jmwoliver/xet-go/catalog/memory"
-	"github.com/jmwoliver/xet-go/content"
-	contentmemory "github.com/jmwoliver/xet-go/content/memory"
-	"github.com/jmwoliver/xet-go/hfcompat"
-	"github.com/jmwoliver/xet-go/model"
-	"github.com/jmwoliver/xet-go/xetcas"
-	casserver "github.com/jmwoliver/xet-go/xetcas/server"
-	"github.com/jmwoliver/xet-go/xethash"
+	"github.com/entireio/xet-go/auth"
+	"github.com/entireio/xet-go/catalog"
+	"github.com/entireio/xet-go/catalog/memory"
+	"github.com/entireio/xet-go/content"
+	contentmemory "github.com/entireio/xet-go/content/memory"
+	"github.com/entireio/xet-go/hfcompat"
+	"github.com/entireio/xet-go/model"
+	"github.com/entireio/xet-go/xetcas"
+	casserver "github.com/entireio/xet-go/xetcas/server"
+	"github.com/entireio/xet-go/xethash"
 )
 
 type catalogWithoutRefListing struct{ catalog.Catalog }

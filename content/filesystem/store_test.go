@@ -17,7 +17,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jmwoliver/xet-go/content"
+	"github.com/entireio/xet-go/content"
 )
 
 func TestOpenValidatesPrivateRealRoot(t *testing.T) {

@@ -9,7 +9,7 @@ import (
 	"io"
 	"sync"
 
-	"github.com/jmwoliver/xet-go/content"
+	"github.com/entireio/xet-go/content"
 )
 
 // New wraps one already length-bounded backend reader. Full reads additionally

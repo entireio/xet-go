@@ -9,7 +9,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/jmwoliver/blake3"
+	"github.com/entireio/blake3"
 )
 
 func TestHashCanonicalText(t *testing.T) {

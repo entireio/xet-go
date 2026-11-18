@@ -13,8 +13,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/jmwoliver/blake3"
-	"github.com/jmwoliver/xet-go/xethash"
+	"github.com/entireio/blake3"
+	"github.com/entireio/xet-go/xethash"
 )
 
 var dataKey = [32]byte{

@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jmwoliver/xet-go/xethash"
+	"github.com/entireio/xet-go/xethash"
 )
 
 func testOID(t testing.TB, value byte) OID {

@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
-	diskcache "github.com/jmwoliver/xet-go/internal/cache"
-	"github.com/jmwoliver/xet-go/xethash"
+	diskcache "github.com/entireio/xet-go/internal/cache"
+	"github.com/entireio/xet-go/xethash"
 )
 
 // Cache stores immutable serialized xorb ranges and expiring global-dedup

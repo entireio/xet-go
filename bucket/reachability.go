@@ -5,11 +5,11 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/jmwoliver/xet-go/catalog"
-	"github.com/jmwoliver/xet-go/content"
-	"github.com/jmwoliver/xet-go/model"
-	casserver "github.com/jmwoliver/xet-go/xetcas/server"
-	"github.com/jmwoliver/xet-go/xethash"
+	"github.com/entireio/xet-go/catalog"
+	"github.com/entireio/xet-go/content"
+	"github.com/entireio/xet-go/model"
+	casserver "github.com/entireio/xet-go/xetcas/server"
+	"github.com/entireio/xet-go/xethash"
 )
 
 // ReachabilityAuditRequest selects one bounded page from the complete tree

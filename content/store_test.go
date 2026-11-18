@@ -12,9 +12,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/jmwoliver/xet-go/content"
-	"github.com/jmwoliver/xet-go/content/filesystem"
-	"github.com/jmwoliver/xet-go/content/memory"
+	"github.com/entireio/xet-go/content"
+	"github.com/entireio/xet-go/content/filesystem"
+	"github.com/entireio/xet-go/content/memory"
 )
 
 type storeFactory func(testing.TB) content.Store

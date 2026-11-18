@@ -8,9 +8,9 @@ import (
 	"io"
 	"time"
 
-	"github.com/jmwoliver/xet-go/shard"
-	"github.com/jmwoliver/xet-go/xethash"
-	"github.com/jmwoliver/xet-go/xorb"
+	"github.com/entireio/xet-go/shard"
+	"github.com/entireio/xet-go/xethash"
+	"github.com/entireio/xet-go/xorb"
 )
 
 // RecoverExpiredBlobStages validates and republishes immutable objects whose

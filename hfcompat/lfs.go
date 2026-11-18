@@ -18,9 +18,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/jmwoliver/xet-go/auth"
-	"github.com/jmwoliver/xet-go/bucket"
-	"github.com/jmwoliver/xet-go/model"
+	"github.com/entireio/xet-go/auth"
+	"github.com/entireio/xet-go/bucket"
+	"github.com/entireio/xet-go/model"
 )
 
 const lfsMediaType = "application/vnd.git-lfs+json"
