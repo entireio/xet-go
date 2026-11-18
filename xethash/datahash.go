@@ -4,7 +4,7 @@ import (
 	"runtime"
 	"sync"
 
-	"github.com/jmwoliver/blake3"
+	"github.com/entireio/blake3"
 )
 
 // The fork selects its compression backend internally. This caller-level batch

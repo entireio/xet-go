@@ -10,8 +10,8 @@ import (
 	"math"
 	"math/bits"
 
-	"github.com/jmwoliver/xet-go/chunker"
-	"github.com/jmwoliver/xet-go/xethash"
+	"github.com/entireio/xet-go/chunker"
+	"github.com/entireio/xet-go/xethash"
 	"github.com/pierrec/lz4/v4"
 )
 

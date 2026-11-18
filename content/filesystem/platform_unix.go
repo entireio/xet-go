@@ -8,7 +8,7 @@ import (
 	"os"
 	"syscall"
 
-	"github.com/jmwoliver/xet-go/content"
+	"github.com/entireio/xet-go/content"
 )
 
 func checkDurabilitySupported() error { return nil }

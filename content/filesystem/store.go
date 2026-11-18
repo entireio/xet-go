@@ -15,8 +15,8 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/jmwoliver/xet-go/content"
-	"github.com/jmwoliver/xet-go/content/internal/verified"
+	"github.com/entireio/xet-go/content"
+	"github.com/entireio/xet-go/content/internal/verified"
 )
 
 const (

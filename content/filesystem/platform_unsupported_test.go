@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/jmwoliver/xet-go/content"
+	"github.com/entireio/xet-go/content"
 )
 
 func TestUnsupportedPlatformHasNoFilesystemSideEffects(t *testing.T) {

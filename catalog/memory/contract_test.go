@@ -14,11 +14,11 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/jmwoliver/xet-go/catalog"
-	"github.com/jmwoliver/xet-go/catalog/memory"
-	postgrescatalog "github.com/jmwoliver/xet-go/catalog/postgres"
-	sqlitecatalog "github.com/jmwoliver/xet-go/catalog/sqlite"
-	"github.com/jmwoliver/xet-go/model"
+	"github.com/entireio/xet-go/catalog"
+	"github.com/entireio/xet-go/catalog/memory"
+	postgrescatalog "github.com/entireio/xet-go/catalog/postgres"
+	sqlitecatalog "github.com/entireio/xet-go/catalog/sqlite"
+	"github.com/entireio/xet-go/model"
 )
 
 type contractCatalog interface {

@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/jmwoliver/xet-go/xethash"
+	"github.com/entireio/xet-go/xethash"
 )
 
 // AuditBlobPayloads performs full, bounded, read-only validation of one page

@@ -17,8 +17,8 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	awss3 "github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/smithy-go"
-	"github.com/jmwoliver/xet-go/content"
-	"github.com/jmwoliver/xet-go/content/internal/verified"
+	"github.com/entireio/xet-go/content"
+	"github.com/entireio/xet-go/content/internal/verified"
 )
 
 const (

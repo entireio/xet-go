@@ -21,7 +21,7 @@ import (
 	awss3 "github.com/aws/aws-sdk-go-v2/service/s3"
 	awstypes "github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"github.com/aws/smithy-go"
-	"github.com/jmwoliver/xet-go/content"
+	"github.com/entireio/xet-go/content"
 )
 
 func TestConfigurationAndObjectKeys(t *testing.T) {

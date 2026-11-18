@@ -9,13 +9,13 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/jmwoliver/xet-go/auth"
-	"github.com/jmwoliver/xet-go/catalog"
-	"github.com/jmwoliver/xet-go/content"
-	"github.com/jmwoliver/xet-go/model"
-	"github.com/jmwoliver/xet-go/xetcas"
-	casserver "github.com/jmwoliver/xet-go/xetcas/server"
-	"github.com/jmwoliver/xet-go/xethash"
+	"github.com/entireio/xet-go/auth"
+	"github.com/entireio/xet-go/catalog"
+	"github.com/entireio/xet-go/content"
+	"github.com/entireio/xet-go/model"
+	"github.com/entireio/xet-go/xetcas"
+	casserver "github.com/entireio/xet-go/xetcas/server"
+	"github.com/entireio/xet-go/xethash"
 )
 
 var (

@@ -4,8 +4,8 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/jmwoliver/xet-go/chunker"
-	"github.com/jmwoliver/xet-go/xethash"
+	"github.com/entireio/xet-go/chunker"
+	"github.com/entireio/xet-go/xethash"
 )
 
 const (

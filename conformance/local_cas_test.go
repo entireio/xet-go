@@ -11,10 +11,10 @@ import (
 	"testing"
 	"time"
 
-	xet "github.com/jmwoliver/xet-go"
-	"github.com/jmwoliver/xet-go/xetcas"
-	"github.com/jmwoliver/xet-go/xethash"
-	"github.com/jmwoliver/xet-go/xorb"
+	xet "github.com/entireio/xet-go"
+	"github.com/entireio/xet-go/xetcas"
+	"github.com/entireio/xet-go/xethash"
+	"github.com/entireio/xet-go/xorb"
 )
 
 // TestOfficialRustLocalCASRoundTrip is gated because it talks to an

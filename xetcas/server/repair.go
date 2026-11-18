@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"reflect"
 
-	"github.com/jmwoliver/xet-go/xethash"
+	"github.com/entireio/xet-go/xethash"
 )
 
 // RepairXorbIndexes boundedly rebuilds missing global Xorb layout records from

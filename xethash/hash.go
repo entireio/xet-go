@@ -14,7 +14,7 @@ import (
 	"sync"
 	"sync/atomic"
 
-	"github.com/jmwoliver/blake3"
+	"github.com/entireio/blake3"
 )
 
 const (

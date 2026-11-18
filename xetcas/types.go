@@ -10,7 +10,7 @@ import (
 	"net/url"
 	"sort"
 
-	"github.com/jmwoliver/xet-go/xethash"
+	"github.com/entireio/xet-go/xethash"
 )
 
 const (

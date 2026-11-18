@@ -18,9 +18,9 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/jmwoliver/xet-go/catalog"
-	"github.com/jmwoliver/xet-go/model"
-	"github.com/jmwoliver/xet-go/xethash"
+	"github.com/entireio/xet-go/catalog"
+	"github.com/entireio/xet-go/model"
+	"github.com/entireio/xet-go/xethash"
 )
 
 func TestOptionsAndConstructionErrors(t *testing.T) {
