@@ -8,11 +8,11 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.107.1
 	github.com/aws/smithy-go v1.27.7
 	github.com/jackc/pgx/v5 v5.10.0
-	github.com/jmwoliver/blake3 v0.0.0-20260801225300-b11c1cdefad3
 	github.com/klauspost/compress v1.18.7
 	github.com/pierrec/lz4/v4 v4.1.27
 	golang.org/x/sys v0.44.0
 	golang.org/x/text v0.40.0
+	lukechampine.com/blake3 v1.5.3
 	modernc.org/sqlite v1.38.2
 )
 

@@ -9,7 +9,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/jmwoliver/blake3"
+	"lukechampine.com/blake3"
 )
 
 func TestHashCanonicalText(t *testing.T) {
@@ -253,8 +253,8 @@ func TestChunkBatchWorkerBudgetAndSerialHasher(t *testing.T) {
 	releaseChunkBatchWorkers(workers)
 
 	data := make([]byte, 64<<10)
-	if got, want := pooledBatchHash(data), Chunk(data); got != want {
-		t.Fatalf("serial batch hash = %s, want %s", got, want)
+	if got, want := Chunks([][]byte{data, data})[1], Chunk(data); got != want {
+		t.Fatalf("batch hash = %s, want %s", got, want)
 	}
 }
 
