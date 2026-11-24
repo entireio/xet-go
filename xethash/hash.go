@@ -14,7 +14,7 @@ import (
 	"sync"
 	"sync/atomic"
 
-	"github.com/jmwoliver/blake3"
+	"lukechampine.com/blake3"
 )
 
 const (
@@ -160,10 +160,6 @@ func (h *Hash) UnmarshalJSON(data []byte) error {
 // uses this value for Merkle natural cuts and deduplication sampling.
 func (h Hash) LastUint64() uint64 { return binary.LittleEndian.Uint64(h[24:]) }
 
-func smallKeyedHash(key [Size]byte, data []byte) Hash {
-	return Hash(blake3.Sum256KeyedChunk(key, data))
-}
-
 func pooledHash(pool *sync.Pool, data []byte) Hash {
 	h := pool.Get().(*blake3.Hasher)
 	_, _ = h.Write(data)
@@ -176,9 +172,6 @@ func pooledHash(pool *sync.Pool, data []byte) Hash {
 
 // Chunk computes the Xet leaf hash of uncompressed chunk bytes.
 func Chunk(data []byte) Hash {
-	if len(data) <= blake3.ChunkSize {
-		return smallKeyedHash(dataKey, data)
-	}
 	return pooledDataHash(data)
 }
 
@@ -210,11 +203,7 @@ func Chunks(data [][]byte) []Hash {
 			if i >= len(data) {
 				return
 			}
-			if len(data[i]) <= blake3.ChunkSize {
-				out[i] = smallKeyedHash(dataKey, data[i])
-			} else {
-				out[i] = pooledBatchHash(data[i])
-			}
+			out[i] = pooledDataHash(data[i])
 		}
 	}
 	var wait sync.WaitGroup
@@ -250,15 +239,18 @@ func releaseChunkBatchWorkers(workers int) {
 // Internal computes the Xet internal-node hash of an already formatted node
 // message.
 func Internal(message []byte) Hash {
-	if len(message) <= blake3.ChunkSize {
-		return smallKeyedHash(internalKey, message)
-	}
 	return pooledHash(&internalHashers, message)
 }
 
 // Protect computes Xet's historically named HMAC operation. It is keyed
 // BLAKE3 over the raw hash bytes, not RFC HMAC.
-func Protect(hash Hash, key Hash) Hash { return smallKeyedHash([Size]byte(key), hash[:]) }
+func Protect(hash Hash, key Hash) Hash {
+	h := blake3.New(Size, key[:])
+	_, _ = h.Write(hash[:])
+	var out Hash
+	h.Sum(out[:0])
+	return out
+}
 
 // Verification computes the hash for an ordered reconstruction-term chunk
 // range.
